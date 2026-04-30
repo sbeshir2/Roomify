@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -8,6 +9,11 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import {
+  getCurrentUser,
+  signIn as puterSignIn,
+  signOut as puterSignOut,
+} from "../lib/puter.action";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -19,9 +25,16 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href:
+      "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
 ];
+
+const DEFAULT_AUTH_STATE: AuthState = {
+  isSignedIn: false,
+  username: null,
+  userId: null,
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -42,7 +55,59 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const [authState, setAuthState] =
+    useState<AuthState>(DEFAULT_AUTH_STATE);
+
+  const refreshAuth = async () => {
+    try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        setAuthState(DEFAULT_AUTH_STATE);
+        return false;
+      }
+
+      setAuthState({
+        isSignedIn: !!user,
+        username: user?.username || null,
+        userId: user?.uuid || null,
+      });
+
+      return !!user;
+    } catch {
+      setAuthState(DEFAULT_AUTH_STATE);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    refreshAuth();
+  }, []);
+
+  const signIn = async () => {
+    await puterSignIn();
+    return await refreshAuth();
+    window.location.href = "https://puter.com";
+    return true;
+  };
+
+  const signOut = async () => {
+    await puterSignOut();
+    return await refreshAuth();
+  };
+
+  return (
+    <main className="min-h-screen bg-background text-foreground relative z-10">
+      <Outlet
+        context={{
+          ...authState,
+          refreshAuth,
+          signIn,
+          signOut,
+        }}
+      />
+    </main>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

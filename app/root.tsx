@@ -85,15 +85,24 @@ export default function App() {
   }, []);
 
   const signIn = async () => {
-    await puterSignIn();
-    return await refreshAuth();
-    window.location.href = "https://puter.com";
-    return true;
-  };
+    try {
+      await puterSignIn();
+      return await refreshAuth();
+    } catch (e) {
+      console.error('Sign in failed:', e);
+      return false;
+    }
 
+  };
   const signOut = async () => {
-    await puterSignOut();
-    return await refreshAuth();
+    try {
+      await puterSignOut();
+      setAuthState(DEFAULT_AUTH_STATE);
+      return true;
+    } catch (e) {
+      console.error('Sign out failed:', e);
+      return false;
+    }
   };
 
   return (

@@ -11,8 +11,12 @@ export default function Navbar() {
 
     if (isSignedIn) {
       try {
-        await signOut();
-        console.log("SIGNED OUT");
+        const ok = await signOut();
+        if (ok === true) {
+          console.log("SIGNED OUT");
+        } else {
+          console.error("Puter sign out returned false", ok);
+        }
       } catch (e) {
         console.error(`Puter sign out failed: ${e}`);
       }
@@ -22,8 +26,12 @@ export default function Navbar() {
 
     try {
       console.log("SIGNING IN...");
-      await signIn();
-      console.log("SIGN IN COMPLETE");
+      const ok = await signIn();
+      if (ok === true) {
+        console.log("SIGN IN COMPLETE");
+      } else {
+        console.error("Puter sign in returned false", ok);
+      }
     } catch (e) {
       console.error(`Puter sign in failed: ${e}`);
     }

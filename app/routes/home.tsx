@@ -19,6 +19,7 @@ export default function Home() {
   const [projects, setProjects, ] = useState<DesignItem[]>([])
 
   const handleUploadComplete = async (base64Image: string) => {
+    console.log("handleUploadComplete called", base64Image?.slice(0, 50));
     const newId = Date.now().toString();
     const name = `Residence ${newId}`; 
 
@@ -27,8 +28,14 @@ export default function Home() {
       renderedImage: undefined, 
       timestamp: Date.now()
     }
-
+    console.log("calling createProject...");
     const saved = await createProject({ item: newItem, visibility: 'private' });
+    console.log("createProject result:", saved);
+
+    if (!saved) {
+      console.error("Failed to create project");
+      return false; 
+    }
 
 
 
@@ -37,7 +44,7 @@ export default function Home() {
       return false; 
     }
     
-    setProjects((prev) => [newItem, ...prev]);
+    setProjects((prev) => [saved, ...prev]);
 
     navigate(`/visualizer/${newId}`, {
       state: {

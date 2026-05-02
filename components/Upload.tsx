@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useOutletContext } from "react-router";
 import {
   Upload as UploadIcon,
@@ -24,6 +24,7 @@ const Upload = ({ onComplete }: UploadProps) => {
 
   const processFile = useCallback(
     (file: File) => {
+      console.log("processFile called", { isSignedIn, file: file.name });  
       if (!isSignedIn) return;
 
       setFile(file);
@@ -42,6 +43,7 @@ const Upload = ({ onComplete }: UploadProps) => {
               clearInterval(interval);
 
               setTimeout(() => {
+                console.log("calling onComplete", !!onComplete);
                 onComplete?.(base64Data);
               }, REDIRECT_DELAY_MS);
 
@@ -71,8 +73,10 @@ const Upload = ({ onComplete }: UploadProps) => {
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    console.log("DROP EVENT FIRED");
     e.preventDefault();
     setIsDragging(false);
+    console.log("handleDrop called", { isSignedIn });
 
     if (!isSignedIn) return;
 

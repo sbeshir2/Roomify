@@ -6,8 +6,9 @@ export default function Navbar() {
   const { isSignedIn, username, signIn, signOut } =
     useOutletContext<AuthContext>();
 
+
   const handleAuthClick = async () => {
-    console.log("AUTH BUTTON CLICKED", { isSignedIn });
+    console.log("AUTH BUTTON CLICKED", { isSignedIn, signIn, signOut });
 
     if (isSignedIn) {
       try {

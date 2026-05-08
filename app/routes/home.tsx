@@ -4,8 +4,8 @@ import { ArrowRight, Layers, Clock, ArrowUpRight, } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Upload from "../../components/Upload";
 import {useNavigate} from "react-router";
-import { useState } from "react";
-import { createProject } from "../../lib/puter.action";
+import { useState, useRef, useEffect } from "react";
+import { createProject, getProjects } from "../../lib/puter.action";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,9 +16,13 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   const navigate = useNavigate();
-  const [projects, setProjects, ] = useState<DesignItem[]>([])
+  const [projects, setProjects, ] = useState<DesignItem[]>([]);
+  const isCreatingProjectRef = useRef(false);
 
   const handleUploadComplete = async (base64Image: string) => {
+    try {
+      if (isCreatingProjectRef.current) return false;
+    isCreatingProjectRef.current = true;
     console.log("handleUploadComplete called", base64Image?.slice(0, 50));
     const newId = Date.now().toString();
     const name = `Residence ${newId}`; 
@@ -46,6 +50,7 @@ export default function Home() {
     
     setProjects((prev) => [saved, ...prev]);
 
+    const savedId = saved.id ?? newId
     navigate(`/visualizer/${newId}`, {
       state: {
         initialImage: base64Image, 
@@ -55,7 +60,21 @@ export default function Home() {
 
 
     return true;
+    } finally {
+      isCreatingProjectRef.current = false;
+    }
+    
   }
+
+  useEffect(() => {
+      const fetchProjects = async () => {
+        const items = await getProjects();
+
+        setProjects(items!)
+      }
+
+      fetchProjects();
+  }, [])
 
   return (
     <div className="home">
@@ -117,10 +136,10 @@ export default function Home() {
           <div className="projects-grid">
               {projects.map(({id, name, renderedImage, sourceImage,
                 timestamp}) => (
-                    <div className="project-card group">
+                    <div className="project-card group" >
                 <div className="preview">
                   <img 
-                  src={renderedImage || sourceImage} alt="Project" />
+                  src={renderedImage || sourceImage} alt="Project" onClick={() => navigate(`/visualizer/${id}`)}/>
                   <div className="badge">
                     <span>Community</span>
                   </div>

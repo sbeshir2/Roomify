@@ -5,6 +5,7 @@ import Button from "../../components/ui/Button";
 import puter from "@heyputer/puter.js";
 import { ROOMIFY_RENDER_PROMPT } from "../../lib/constants";
 import { createProject, getProjectById } from "../../lib/puter.action";
+import { ReactCompareSlider, ReactCompareSliderImage } from 'react-compare-slider';
 
 const generate3DView = async ({ sourceImage }: Generate3DViewParams) => {
     
@@ -40,6 +41,7 @@ const VisualizerId = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const locationState = location.state as { initialImage?: string; initialRendered?: string | null } | null;
     const { userId } = useOutletContext<AuthContext>()
     const hasInitialGenerated = useRef(false);
 
@@ -50,6 +52,16 @@ const VisualizerId = () => {
     const [currentImage, setCurrentImage] = useState<string | null>(null);
 
     const handleBack = () => navigate('/');
+    const handleExport = () => {
+        if (!currentImage) return;
+
+        const link = document.createElement('a');
+        link.href = currentImage;
+        link.download = `roomify-${id || 'design'}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     const runGeneration = async (item: DesignItem) => {
         if(!id || !item.sourceImage) return;
@@ -101,6 +113,22 @@ const VisualizerId = () => {
             const fetchedProject = await getProjectById({ id });
 
             if (!isMounted) return;
+
+            if (!fetchedProject && locationState?.initialImage) {
+            const fallback: DesignItem = {
+                id: id,
+                name: `Residence ${id}`,
+                sourceImage: locationState.initialImage,
+                renderedImage: locationState.initialRendered ?? undefined,
+                timestamp: Date.now(),
+            };
+            setProject(fallback);
+            setCurrentImage(locationState.initialRendered || null);
+            setIsProjectLoading(false);
+            hasInitialGenerated.current = false;
+            return;
+        }
+
 
             setProject(fetchedProject);
             setCurrentImage(fetchedProject?.renderedImage || null);
@@ -158,7 +186,7 @@ const VisualizerId = () => {
                             <div className="panel-actions">
                                 <Button 
                                     size="sm"
-                                    onClick={() => {}}
+                                    onClick={handleExport}
                                     className="export"
                                     disabled={!currentImage}
                                 >
@@ -191,7 +219,39 @@ const VisualizerId = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div>{}
+                    
+                    <div className="panel compare"> {}
+                            <div className="panel-header">
+                            <div className="panel-meta"></div>
+                                <p>Comparison</p>
+                                <h3>Before and After</h3>
+                            </div>
+                            <div className="hint">Drag to compare</div>
+
+                            <div className="compare-stage">
+                                {project?.sourceImage && currentImage ? (
+                                    <ReactCompareSlider 
+                                        defaultValue={50}
+                                        style={{ width: '100%', height: 'auto' }}
+                                        itemOne= {
+                                            <ReactCompareSliderImage src={project?.sourceImage ?? undefined} alt="before" 
+                                            className="compare-img"/>
+                                        }
+                                        itemTwo= {
+                                            <ReactCompareSliderImage src={currentImage || project?.renderedImage || undefined} alt="after" 
+                                            className="compare-img"/>
+                                        }
+                                    />
+                                ) : (
+                                    <div className="compare-fallback">
+                                        {project?.sourceImage && (
+                                            <img src={project.sourceImage} alt="Before" className="compare-img" />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                    </div>        
                     </div>
                 </section>
         </div>
